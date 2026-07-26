@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0B0D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>PRESSURE</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.allorigins.win">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0A0B0D;--plane:#101317;--plane2:#161A20;--raise:#1C2128;
+  --edge:#1F242B;--edge2:#2C333C;
+  --ink:#E8EBEF;--mute:#8D959F;--faint:#5A626C;--ghost:#3B424B;
+  --long:#2FBF71;--short:#E4483F;--amb:#F0A020;--wait:#8B5CF6;--info:#6BA5F7;
+  --nav:60px;
+  --disp:'Archivo',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--void);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--void);color:var(--ink);
+  font-family:var(--disp);font-size:14px;line-height:1.45;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top);overscroll-behavior-y:contain}
+.lab{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.num{font-family:var(--mono)}
+
+#ptr{position:fixed;left:0;right:0;top:0;z-index:70;height:0;display:grid;place-items:center;
+  color:var(--long);font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  overflow:hidden;pointer-events:none}
+
+.top{position:sticky;top:0;z-index:50;background:var(--void);border-bottom:1px solid var(--edge)}
+.top-a{display:flex;align-items:center;gap:12px;padding:11px 14px}
+.top-a .ttl{flex:1;min-width:0}
+.top-a .ttl b{display:block;font-size:15px;font-weight:700;letter-spacing:.06em;line-height:1.1}
+.top-a .ttl span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;
+  color:var(--faint);text-transform:uppercase;margin-top:3px}
+.rf{flex:none;width:40px;height:40px;border:1px solid var(--edge2);border-radius:11px;background:none;
+  color:var(--mute);cursor:pointer;display:grid;place-items:center}
+.rf:active{background:var(--raise)}
+.rf.spin{color:var(--long)}.rf.spin svg{animation:sp 1s linear infinite}
+.rf svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+@keyframes sp{to{transform:rotate(360deg)}}
+.prog{height:2px;background:var(--edge);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--long);transition:width .25s}
+.cov{display:flex;gap:7px;padding:8px 14px;align-items:center;
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.pips{display:flex;gap:3px}
+.pips i{width:6px;height:6px;border-radius:2px;background:var(--ghost)}
+.pips i.k{background:var(--long)}.pips i.x{background:var(--short)}
+
+main{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 22px)}
+.sec{padding:16px 14px;border-bottom:1px solid var(--edge)}
+
+/* ── pressure ── */
+.gz{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.gz .big{font-family:var(--mono);font-size:30px;font-weight:600;line-height:.9;letter-spacing:-.02em}
+.gz .big.pos{color:var(--short)}.gz .big.neg{color:var(--long)}
+.expl{font-size:11px;color:var(--mute);line-height:1.5;margin:10px 0 14px;max-width:52ch}
+.trk{position:relative;height:28px}
+.trk .bg{position:absolute;left:0;right:0;top:10px;height:8px;border-radius:4px;
+  background:linear-gradient(90deg,rgba(47,191,113,.2),rgba(90,98,108,.12) 48%,rgba(90,98,108,.12) 52%,rgba(228,72,63,.2))}
+.trk .zr{position:absolute;left:50%;top:4px;bottom:4px;width:1px;background:var(--faint)}
+.trk .fl{position:absolute;top:10px;height:8px;border-radius:4px;background:var(--ink);
+  transition:left .4s cubic-bezier(.22,1,.36,1),width .4s cubic-bezier(.22,1,.36,1)}
+.trk .fl.p{background:var(--short)}.trk .fl.n{background:var(--long)}
+.ends{display:flex;justify-content:space-between;margin-top:2px}
+.hz{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.hz div{border:1px solid var(--edge);border-radius:10px;padding:10px;text-align:center;background:var(--plane)}
+.hz .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--ghost);text-transform:uppercase}
+.hz .v{font-family:var(--mono);font-size:16px;font-weight:600;margin-top:5px}
+.hz .v.pos{color:var(--short)}.hz .v.neg{color:var(--long)}.hz .v.z{color:var(--ghost)}
+.hz .n{font-family:var(--mono);font-size:8.5px;color:var(--ghost);margin-top:4px}
+
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.ic{border:1px solid var(--edge2);border-radius:12px;padding:12px;background:var(--plane);
+  border-left-width:3px;border-left-color:var(--ghost);position:relative}
+.ic.up{border-left-color:var(--long)}.ic.dn{border-left-color:var(--short)}
+.ic.am{border-left-color:var(--amb)}.ic.wt{border-left-color:var(--wait)}
+.ic .s{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
+.ic .b{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-top:6px;line-height:1}
+.b.up{color:var(--long)}.b.dn{color:var(--short)}.b.am{color:var(--amb)}
+.b.wt{color:var(--wait)}.b.na{color:var(--ghost)}
+.ic .m{font-family:var(--mono);font-size:9.5px;color:var(--faint);margin-top:8px}
+.ic.seal .b,.ic.seal .m{visibility:hidden}
+.ic.seal:after{content:'SEALED · M5';position:absolute;left:12px;right:12px;top:34px;bottom:12px;
+  display:grid;place-items:center;font-family:var(--mono);font-size:8.5px;letter-spacing:.15em;
+  color:var(--faint);background:repeating-linear-gradient(135deg,var(--edge) 0 6px,var(--plane2) 6px 12px);
+  border-radius:6px}
+.note{font-size:11.5px;color:var(--mute);line-height:1.55;margin:14px 0 0}
+
+.lk{display:flex;align-items:center;gap:13px;padding:13px 14px;background:var(--plane);
+  border-bottom:1px solid var(--edge);border-left:3px solid var(--short);position:relative;overflow:hidden}
+.lk:before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--pct,0%);
+  background:rgba(228,72,63,.1);transition:width .95s linear}
+.lk.ok{border-left-color:var(--long)}.lk.ok:before{background:rgba(47,191,113,.09)}
+.lk .c{flex:none;font-family:var(--mono);font-size:23px;font-weight:600;color:var(--short);
+  min-width:78px;position:relative}
+.lk.ok .c{font-size:14px;color:var(--long)}
+.lk .t{flex:1;min-width:0;position:relative}
+.lk .t p{margin:0;font-size:11.5px;color:var(--mute);line-height:1.4}
+.lk .t q{quotes:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;font-size:11.5px;margin-top:4px;color:var(--ink)}
+
+.mic{padding:13px 14px;background:rgba(139,92,246,.07);border-bottom:1px solid var(--edge);
+  border-left:3px solid var(--wait)}
+.mic .h{color:var(--wait);margin-bottom:8px}
+.mic p{margin:0 0 4px;font-size:12px;line-height:1.45}
+.mic p i{font-style:normal;color:var(--ghost);font-family:var(--mono);font-size:10px}
+.mic .n{font-size:11px;color:var(--mute);margin-top:9px;line-height:1.55}
+
+.diag{margin:14px;padding:14px;border:1px solid var(--short);border-radius:12px;background:rgba(228,72,63,.07)}
+.diag h4{margin:0 0 9px;font-size:13px;color:var(--short);font-weight:700}
+.diag ol{margin:0;padding-left:18px;font-size:11.5px;color:var(--mute);line-height:1.65}
+.diag b{color:var(--ink)}
+
+.feed{padding:6px 14px 0}
+.ev{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid var(--edge);
+  content-visibility:auto;contain-intrinsic-size:auto 132px}
+.ev .sp{flex:none;width:3px;border-radius:2px;align-self:stretch;background:#4A525C}
+.ev .bd{flex:1;min-width:0}
+.ev .hd{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.tag{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+  padding:3px 6px;border-radius:4px;background:var(--raise);color:var(--mute);white-space:nowrap}
+.tag.prim{background:rgba(240,160,32,.16);color:var(--amb)}
+.tag.x1{color:var(--faint)}
+.tag.x2{background:rgba(107,165,247,.15);color:var(--info)}
+.tag.x3{background:rgba(47,191,113,.15);color:var(--long)}
+.ev .tm{font-family:var(--mono);font-size:9.5px;color:var(--ghost);margin-left:auto}
+.ev h3{margin:0;font-size:13.5px;font-weight:500;line-height:1.4}
+.ev h3 a{color:var(--ink);text-decoration:none}
+.ev .lean{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.pill{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:4px 8px;border-radius:5px;
+  border:1px solid var(--edge2);color:var(--faint)}
+.pill.up{border-color:rgba(47,191,113,.4);color:var(--long)}
+.pill.dn{border-color:rgba(228,72,63,.4);color:var(--short)}
+.pill.am{border-color:rgba(240,160,32,.4);color:var(--amb)}
+.pill.wt{border-color:rgba(139,92,246,.4);color:var(--wait)}
+.ev .nt{font-size:11px;color:var(--faint);line-height:1.5;margin:9px 0 0}
+.ev.n0{opacity:.45}
+
+.spark{display:flex;gap:2px;align-items:flex-end;height:56px}
+.spark i{flex:1;background:var(--edge2);min-height:2px;border-radius:1px}
+.spark i.m{background:var(--amb)}.spark i.h{background:var(--short)}
+.fil{display:flex;gap:6px;overflow-x:auto;padding:2px 14px;margin:0 -14px;scrollbar-width:none}
+.fil::-webkit-scrollbar{display:none}
+.fil button{flex:none;background:none;border:1px solid var(--edge2);border-radius:20px;color:var(--faint);
+  cursor:pointer;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:8px 13px}
+.fil button[aria-pressed=true]{border-color:var(--ink);color:var(--ink);background:var(--raise)}
+.day{position:sticky;top:0;z-index:4;background:var(--void);font-family:var(--mono);font-size:9px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--mute);padding:11px 0 8px;
+  border-bottom:1px solid var(--edge2);margin-top:18px}
+.meas{font-family:var(--mono);font-size:10.5px;color:var(--mute);margin-top:10px;padding:9px 11px;
+  background:var(--plane);border-radius:8px;line-height:1.6}
+.mbtn{background:none;border:1px solid var(--edge2);border-radius:7px;color:var(--faint);cursor:pointer;
+  font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:7px 11px;margin-top:10px}
+.mbtn[disabled]{opacity:.4}
+
+/* ── legend ── */
+.lg{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--edge)}
+.lg .sw{flex:none;width:14px;height:14px;border-radius:4px}
+.lg .sw.b{width:3px;height:22px;border-radius:2px}
+.lg .tx{flex:1;min-width:0;font-size:12px}
+.lg .tx i{display:block;font-style:normal;font-size:10.5px;color:var(--faint);line-height:1.4;margin-top:2px}
+
+.src{display:flex;justify-content:space-between;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid var(--edge)}
+.src .l{min-width:0;flex:1}
+.src .l b{display:block;font-size:12.5px;font-weight:500}
+.src .l span{font-family:var(--mono);font-size:9px;color:var(--ghost);letter-spacing:.1em;text-transform:uppercase}
+.src .st{font-family:var(--mono);font-size:9.5px;text-align:right;white-space:nowrap}
+.st.ok{color:var(--long)}.st.ko{color:var(--short)}.st.pd{color:var(--faint)}
+.own{color:var(--amb)}
+input[type=text]{width:100%;background:var(--plane);border:1px solid var(--edge2);border-radius:9px;
+  color:var(--ink);font-family:var(--mono);font-size:11.5px;padding:13px}
+.acts{display:flex;gap:9px;margin-top:11px}
+.acts button{flex:1;background:none;border:1px solid var(--edge2);border-radius:9px;color:var(--ink);
+  cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;padding:14px}
+.acts button.p{border-color:var(--long);color:var(--long)}
+.hint{font-size:11.5px;color:var(--mute);line-height:1.7;margin-top:16px}
+.hint b{color:var(--amb);font-weight:600}
+
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;
+  background:#0C0E11;border-top:1px solid var(--edge2);padding-bottom:env(safe-area-inset-bottom)}
+.nav button{flex:1;height:var(--nav);background:none;border:0;cursor:pointer;color:var(--ghost);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;position:relative}
+.nav button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7}
+.nav button[aria-selected=true]{color:var(--ink)}
+.nav button[aria-selected=true]:before{content:'';position:absolute;top:0;left:26%;right:26%;height:2px;
+  background:var(--ink);border-radius:0 0 2px 2px}
+.void{text-align:center;padding:52px 20px;color:var(--ghost);font-size:12px;line-height:1.8}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="ptr"></div>
+
+<div class="top">
+  <div class="top-a">
+    <div class="ttl"><b>PRESSURE</b><span>Trump desk · GBPUSD / XAGUSD</span></div>
+    <button class="rf" id="rf" aria-label="Rescan">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg></button>
+  </div>
+  <div class="prog"><i id="prog"></i></div>
+  <div class="cov"><span class="pips" id="pips"></span><span id="cov">starting…</span></div>
+</div>
+
+<main id="v1">
+  <div id="diagBox"></div>
+  <section class="sec">
+    <div class="gz">
+      <div style="flex:1">
+        <div class="lab">Dollar pressure</div>
+        <div class="lab" id="pMeta" style="margin-top:6px">4-hour window</div>
+      </div>
+      <div class="big num" id="pVal">0.00</div>
+    </div>
+    <p class="expl">Net direction of Trump-driven catalysts on the dollar. Each event carries a sign
+      (+ dollar bought, − dollar sold), is weighted by tier and decays with age. It tells you which side
+      the news flow is leaning — <b>not</b> where price is going.</p>
+    <div class="trk"><div class="bg"></div><div class="zr"></div><div class="fl" id="pFill" style="left:50%;width:0"></div></div>
+    <div class="ends"><span class="lab" style="color:var(--long)">Dollar sold</span>
+      <span class="lab" style="color:var(--short)">Dollar bought</span></div>
+
+    <div class="hz">
+      <div><div class="k">4 h</div><div class="v z" id="h4">0.00</div><div class="n" id="h4n">0 ev</div></div>
+      <div><div class="k">24 h</div><div class="v z" id="h24">0.00</div><div class="n" id="h24n">0 ev</div></div>
+      <div><div class="k">7 d</div><div class="v z" id="h7">0.00</div><div class="n" id="h7n">0 ev</div></div>
+    </div>
+
+    <div class="pairs">
+      <div class="ic" id="gC"><div class="s">GBPUSD</div><div class="b na" id="gB">—</div><div class="m" id="gM">0 for · 0 against</div></div>
+      <div class="ic" id="xC"><div class="s">XAGUSD</div><div class="b na" id="xB">—</div><div class="m" id="xM">0 for · 0 against</div></div>
+    </div>
+    <p class="note" id="note">No catalyst in window. A bias is contextual lean, never an entry signal.</p>
+  </section>
+
+  <section class="lk" id="lk" hidden>
+    <div class="c num" id="lkC">--:--</div>
+    <div class="t"><p id="lkM"></p><q id="lkS"></q></div>
+  </section>
+
+  <section class="mic" id="mic" hidden>
+    <div class="lab h">Open mic · headline risk</div>
+    <div id="micL"></div>
+    <div class="n">Not a directional catalyst — an unpredictable headline window. Stay flat, or widen the stop. Never tighten it.</div>
+  </section>
+
+  <div class="feed" id="feed"><div class="void">Loading 30 days of context…</div></div>
+</main>
+
+<main id="v2" hidden>
+  <section class="sec">
+    <div class="lab" style="margin-bottom:11px">Major event density · per day</div>
+    <div class="spark" id="spark"></div>
+    <div class="ends" style="margin-top:8px"><span class="lab">D-30</span><span class="lab">Today</span></div>
+  </section>
+  <div style="padding:14px 14px 0"><div class="fil" id="fil"></div></div>
+  <div class="feed" id="arch"><div class="void">Waiting for first scan.</div></div>
+</main>
+
+<main id="v3" hidden>
+  <section class="sec">
+    <div class="lab" style="margin-bottom:6px">Feed status</div>
+    <div id="srcList"></div>
+    <div style="margin-top:18px"><div class="lab" style="margin-bottom:9px">Extra feed</div>
+      <input type="text" id="cf" placeholder="RSS URL (optional)"></div>
+    <div class="acts"><button id="bSave">Save</button><button id="bScan" class="p">Rescan all</button></div>
+  </section>
+
+  <section class="sec">
+    <div class="lab" style="margin-bottom:10px">Colour key · category</div>
+    <div id="legCat"></div>
+  </section>
+
+  <section class="sec">
+    <div class="lab" style="margin-bottom:10px">Colour key · direction &amp; sourcing</div>
+    <div id="legDir"></div>
+    <div class="hint">
+      <b>Loading.</b> Six feeds only. Eighteen was the problem, not the fix — every request goes through a
+      public CORS relay, and a burst gets the whole batch rate-limited. One broad newswire query now
+      replaces eight themed ones: classification happens on-device, so category coverage is unchanged
+      while request count drops by two thirds. Failed feeds are retried once with backoff.
+      <br><br>
+      <b>Method.</b> Dollar pressure = sum of events in the window, signed by category, weighted by tier
+      (1–3), decayed linearly with age, clamped to ±1.00. Ambiguous categories count zero — they are never
+      averaged into a direction.
+      <br><br>
+      <b>Gesture.</b> Pull down from the top of the page to force a rescan.
+    </div>
+  </section>
+</main>
+
+<nav class="nav" role="tablist">
+  <button id="t1" role="tab" aria-selected="true">
+    <svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Live</button>
+  <button id="t2" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>30 days</button>
+  <button id="t3" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="18" cy="18" r="3"/></svg>Info</button>
+</nav>
+
+<script>
+'use strict';
+/* ═════════════════════ PRESSURE R7 ═════════════════════ */
+const $=id=>document.getElementById(id);
+const D={};['prog','pips','cov','pVal','pMeta','pFill','h4','h4n','h24','h24n','h7','h7n',
+  'gB','gM','gC','xB','xM','xC','note','lk','lkC','lkM','lkS','mic','micL','feed','arch',
+  'srcList','spark','fil','diagBox','rf','ptr','cf','legCat','legDir'].forEach(k=>D[k]=$(k));
+
+const Store=(()=>{let ok=true,mem={};
+  try{localStorage.setItem('_p','1');localStorage.removeItem('_p')}catch(e){ok=false}
+  return{g:k=>{try{return ok?localStorage.getItem(k):mem[k]??null}catch(e){return mem[k]??null}},
+         s:(k,v)=>{try{ok?localStorage.setItem(k,v):mem[k]=v}catch(e){mem[k]=v}}}})();
+
+const PX=[
+  u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+  u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),
+  u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+  u=>'https://api.cors.lol/?url='+encodeURIComponent(u)
+];
+let ABORT=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function grab(url,{direct=false,ms=15000}={}){
+  const chain=direct?[u=>u,...PX]:PX;let last=null;
+  for(const b of chain){
+    if(ABORT?.signal.aborted)throw new Error('aborted');
+    const c=new AbortController(),k=setTimeout(()=>c.abort(),ms);
+    const relay=()=>c.abort();ABORT?.signal.addEventListener('abort',relay,{once:true});
+    try{
+      const r=await fetch(b(url),{signal:c.signal,cache:'no-store'});
+      clearTimeout(k);ABORT?.signal.removeEventListener('abort',relay);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const t=await r.text();if(!t||t.length<40)throw new Error('empty');
+      return t;
+    }catch(e){clearTimeout(k);ABORT?.signal.removeEventListener('abort',relay);last=e;
+      await sleep(250);}                       // souffle entre deux relais
+  }
+  throw last||new Error('all relays failed');
+}
+
+/* ── SIX feeds. One broad newswire query replaces eight themed ones:
+      the classifier runs on-device, so nothing is lost.              ── */
+const GN=q=>'https://news.google.com/rss/search?q='+encodeURIComponent(q)+'&hl=en-US&gl=US&ceid=US:en';
+const TSID='107780257626128497';
+const SRC=[
+ {i:'wire',l:'Newswire · 48 h',g:'Press',k:'rss',p:0,ttl:300,u:GN('Trump when:2d')},
+ {i:'mkt', l:'Market catalysts · 30 d',g:'Press',k:'rss',p:0,ttl:900,
+  u:GN('Trump (tariff OR tariffs OR Fed OR Powell OR dollar OR sanctions OR strike OR "trade deal" OR shutdown) when:30d')},
+ {i:'wha', l:'Presidential actions',g:'Official',k:'rss',own:1,p:1,ttl:900,
+  u:'https://www.whitehouse.gov/presidential-actions/feed/'},
+ {i:'whn', l:'White House',g:'Official',k:'rss',own:1,p:1,ttl:900,
+  u:'https://www.whitehouse.gov/news/feed/'},
+ {i:'fr',  l:'Federal Register',g:'Official',k:'json',own:1,d:1,p:2,ttl:1800,
+  u:'https://www.federalregister.gov/api/v1/documents.json?per_page=40&order=newest&fields[]=title&fields[]=publication_date&fields[]=html_url&fields[]=presidential_document_type&conditions[type][]=PRESDOCU&conditions[president][]=donald-trump'},
+ {i:'truth',l:'Truth Social',g:'Account',k:'masto',own:1,p:2,ttl:180,
+  u:'https://truthsocial.com/api/v1/accounts/'+TSID+'/statuses?exclude_replies=true&limit=40'}
+];
+
+const RULES=[
+ {id:'MIC',n:2,c:'OPEN MIC',h:'#8B5CF6',a:'rgba(139,92,246,.17)',mic:1,usd:0,g:'WAIT',x:'WAIT',
+  d:'Trump is live or about to be — press conference, rally, interview, Oval Office remarks.',
+  kw:[/press\s+conference/i,/\b(will|to|set to)\s+(speak|address)\b/i,/oval\s+office\s+(remarks|address)/i,
+      /joint\s+address/i,/\brally\b/i,/town\s?hall/i,/live\s+(remarks|address|speech)/i,
+      /interview\s+(with|on)/i,/told\s+(reporters|fox)/i,/sits?\s+down\s+with/i],
+  t:'Headline-risk window. Nothing directional to trade — a stream of headlines, not a catalyst.'},
+ {id:'FED_INDEP',n:3,c:'FED INDEPENDENCE',h:'#3B82F6',a:'rgba(59,130,246,.17)',usd:-1,g:'LONG',x:'LONG',
+  d:'Threats to fire, remove or sue the Fed chair.',
+  kw:[/fir(e|ing)\s+powell/i,/remov(e|ing)\s+powell/i,/replac\w*\s+(jerome\s+)?powell/i,/oust\w*\s+powell/i,
+      /fed\s+chair.{0,25}(fire|remove|replace|oust)/i,/sue\s+the\s+fed/i],
+  t:'Attack on Fed independence → dollar sold broadly, metals bid. Violent impulse, frequent partial retrace.'},
+ {id:'FED_DOVE',n:2,c:'FED PRESSURE',h:'#3B82F6',a:'rgba(59,130,246,.17)',usd:-1,g:'LONG',x:'LONG',
+  d:'Public pressure to cut rates.',
+  kw:[/(cut|lower|slash)\w*\s+(interest\s+)?rates?/i,/rate\s+cut/i,/powell.{0,30}(too late|behind|slow)/i],
+  t:'Pressure to cut. Effect is bounded if the Fed does not follow — check the 2-year first.'},
+ {id:'DXY',n:2,c:'DOLLAR TALK',h:'#14B8A6',a:'rgba(20,184,166,.17)',usd:-1,g:'LONG',x:'LONG',
+  d:'Direct commentary on the level of the dollar.',
+  kw:[/dollar.{0,25}(too strong|overvalued|hurting|weaken)/i,/(weaken|devalue).{0,15}dollar/i],
+  t:'Talking the dollar down. Short-lived unless the Treasury echoes it.'},
+ {id:'TAR_UP',n:3,c:'TARIFFS · ESCALATION',h:'#FF6B35',a:'rgba(255,107,53,.17)',usd:1,g:'SHORT',x:'CONFLICT',
+  d:'New, raised or threatened tariffs; Section 232/301; trade war language.',
+  kw:[/\d{1,3}\s?(%|percent)\s+tariff/i,/impos\w+\s+.{0,20}tariffs?/i,/new\s+tariffs?/i,
+      /rais\w+\s+tariffs?/i,/section\s+(232|301)/i,/trade\s+war/i],
+  t:'Dollar as haven, cable under pressure. Silver conflicted: haven bid against industrial demand destruction — do not trade it on this alone.'},
+ {id:'TAR_DN',n:2,c:'TARIFFS · EASING',h:'#2FBF71',a:'rgba(47,191,113,.17)',usd:-1,g:'LONG',x:'LONG',
+  d:'Deals signed, tariffs paused, exemptions granted.',
+  kw:[/(trade\s+deal|agreement)\s+(with|reached|signed)/i,/(paus\w+|delay\w+|suspend\w+|drop\w+)\s+.{0,20}tariffs?/i,
+      /tariff\s+exemption/i,/exempt\w*\s+from\s+tariffs?/i],
+  t:'Risk-on, dollar sold, silver supported by industrial demand. The cleanest XAGUSD setup.'},
+ {id:'GEO',n:3,c:'GEOPOLITICS',h:'#E4483F',a:'rgba(228,72,63,.17)',usd:1,g:'SHORT',x:'LONG',
+  d:'Military action, strikes, sanctions, troop movements.',
+  kw:[/military\s+(strike|action|operation)/i,/(air)?strikes?\s+(on|against)/i,/sanctions?\s+(on|against)/i,
+      /troops?\s+to/i,/blockade/i,/warship|carrier\s+group/i],
+  t:'Classic risk-off: dollar and metals rise together. Silver tracks gold with more beta and more false starts.'},
+ {id:'BUD',n:2,c:'FISCAL RISK',h:'#F0A020',a:'rgba(240,160,32,.17)',usd:0,g:'NEUTRAL',x:'LONG',
+  d:'Shutdown, debt ceiling, default risk.',
+  kw:[/government\s+shutdown/i,/debt\s+ceiling/i,/default\s+on/i],
+  t:'Metals bid, dollar ambiguous — haven against sovereign risk. Cable bias unreliable here.'},
+ {id:'FIS',n:1,c:'FISCAL · DEREG',h:'#84CC16',a:'rgba(132,204,22,.17)',usd:1,g:'SHORT',x:'NEUTRAL',
+  d:'Tax cuts, deregulation, energy policy.',
+  kw:[/tax\s+cuts?/i,/deregulat/i,/corporate\s+tax/i,/energy\s+dominance/i],
+  t:'Pro-growth, mildly dollar-supportive. Weak intraday impact.'},
+ {id:'UK',n:2,c:'STERLING DIRECT',h:'#A855F7',a:'rgba(168,85,247,.17)',usd:0,g:'READ',x:'NEUTRAL',
+  d:'Anything naming Britain, the UK, Starmer or sterling.',
+  kw:[/\b(britain|british|united kingdom|starmer|sterling)\b/i],
+  t:'Direct sterling catalyst. Read the headline — direction depends on content, not the keyword.'}
+];
+const NO={id:'NO',n:0,c:'NOISE',h:'#4A525C',a:'rgba(74,82,92,.17)',usd:0,g:'NEUTRAL',x:'NEUTRAL',
+  d:'No market-relevant trigger matched.',t:''};
+const RM=Object.fromEntries([...RULES,NO].map(r=>[r.id,r]));
+const CLS=k=>k==='LONG'?'up':k==='SHORT'?'dn':(k==='CONFLICT'||k==='READ')?'am':k==='WAIT'?'wt':'na';
+
+const cc=new Map();
+const classify=t=>{let r=cc.get(t);if(r)return r;
+  r=RULES.find(x=>x.kw.some(re=>re.test(t)))||NO;
+  if(cc.size>4000)cc.clear();cc.set(t,r);return r};
+
+const sc=document.createElement('div');
+const strip=h=>{sc.textContent='';sc.innerHTML=h;return(sc.textContent||'').trim()};
+function pRSS(x,l){
+  const d=new DOMParser().parseFromString(x,'text/xml');
+  if(d.querySelector('parsererror'))throw new Error('bad XML');
+  const it=[...d.querySelectorAll('item,entry')];if(!it.length)throw new Error('0 items');
+  return it.slice(0,80).map(n=>{
+    let ti=(n.querySelector('title')?.textContent||'').trim();
+    const ln=n.querySelector('link');
+    const li=(ln?.textContent||'').trim()||ln?.getAttribute('href')||'';
+    const dt=new Date(n.querySelector('pubDate,published,updated')?.textContent||Date.now());
+    let so=n.querySelector('source')?.textContent||'';
+    const p=ti.lastIndexOf(' - ');
+    if(!so&&p>25){so=ti.slice(p+3);ti=ti.slice(0,p)}
+    return{ti:strip(ti),li,dt,so:so||l}}).filter(e=>e.ti&&!isNaN(e.dt));
+}
+function pMasto(j,l){
+  const a=JSON.parse(j);if(!Array.isArray(a))throw new Error('unexpected format');
+  return a.map(s=>{let t=strip(s.content||'');
+    if(!t&&s.reblog)t='↻ '+strip(s.reblog.content||'');
+    if(!t&&s.media_attachments?.length)t='[media, no text]';
+    return{ti:t.slice(0,300),li:s.url||'',dt:new Date(s.created_at),so:l}})
+    .filter(e=>e.ti&&!isNaN(e.dt));
+}
+const pFR=j=>(JSON.parse(j).results||[]).map((r,i)=>({
+  ti:r.title,li:r.html_url,dt:new Date(Date.parse(r.publication_date+'T14:00:00Z')-i*6e4),
+  so:(r.presidential_document_type||'presidential document').replace(/_/g,' ')})).filter(e=>e.ti);
+
+const DAY=864e5,WIN=30*DAY,MAXEV=420,SHOW=70;
+let EV=[],ST={},CACHE={},last=0,filt='ALL',ARCH=null,archN=40,saveT=null,archDirty=true,
+    busy=false,coldDone=false,absorbT=null;
+const MEAS=new Map();
+const key=e=>e.ti.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).slice(0,9).join(' ');
+const uid=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return'u'+(h>>>0).toString(36)};
+SRC.forEach(s=>ST[s.i]={l:s.l,g:s.g,own:!!s.own,state:'pd'});
+
+const arch=()=>{if(ARCH)return ARCH;try{ARCH=JSON.parse(Store.g('p7_arch')||'[]')}catch(e){ARCH=[]}return ARCH};
+const persist=()=>{clearTimeout(saveT);saveT=setTimeout(()=>{
+  const w=()=>{try{Store.s('p7_arch',JSON.stringify(ARCH))}catch(e){}};
+  (window.requestIdleCallback||setTimeout)(w,{timeout:3000})},2500)};
+function absorbSoon(list){
+  clearTimeout(absorbT);
+  absorbT=setTimeout(()=>{
+    const a=arch(),seen=new Set(a.map(x=>x.k)),cut=Date.now()-WIN;let add=0;
+    for(const e of list){const k=key(e);if(k.length<12||seen.has(k))continue;seen.add(k);add++;
+      a.push({k,id:uid(k),t:e.ti.slice(0,240),l:e.li,ts:+e.dt,s:e.so,o:e.own?1:0,r:e.rule.id,n:e.rule.n})}
+    if(add||a.some(x=>x.ts<=cut)){
+      ARCH=a.filter(x=>x.ts>cut).sort((x,y)=>y.ts-x.ts).slice(0,2500);persist();archDirty=true}
+  },1200);
+}
+
+const STOP=new Set(['trump','president','donald','after','about','says','said','with','from','that','this',
+ 'will','have','been','over','into','more','than','their','what','when','while','which','could','would','other']);
+const toks=t=>{const s=new Set();
+  for(const w of t.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(/\s+/))
+    if(w.length>4&&!STOP.has(w))s.add(w);return s};
+function corroborate(list){
+  const idx=new Map(),cl=[];
+  for(const e of list){
+    const t=toks(e.ti);let best=-1,bn=0;
+    if(t.size>=3){const sco=new Map();
+      for(const w of t){const arr=idx.get(w);if(arr)for(const ci of arr)sco.set(ci,(sco.get(ci)||0)+1)}
+      for(const[ci,n]of sco)if(n>bn){bn=n;best=ci}}
+    if(best>=0&&bn>=3&&bn/Math.max(3,Math.min(t.size,cl[best].sz))>=.42){
+      const c=cl[best];c.m.push(e);
+      for(const w of t)if(!c.t.has(w)){c.t.add(w);let a=idx.get(w);if(!a)idx.set(w,a=[]);a.push(best)}
+    }else{const ci=cl.length;cl.push({t:new Set(t),sz:t.size,m:[e]});
+      for(const w of t){let a=idx.get(w);if(!a)idx.set(w,a=[]);a.push(ci)}}
+  }
+  for(const c of cl){const s=new Set();let prim=false;
+    for(const m of c.m){s.add(m.so);if(m.own)prim=true}
+    for(const m of c.m){m.xn=s.size;m.prim=prim}}
+}
+
+/* ── scan : séquentiel espacé + une reprise sur échec ── */
+async function fetchOne(s){
+  const raw=await grab(s.u,{direct:!!s.d});
+  const items=(s.k==='json'?pFR(raw):s.k==='masto'?pMasto(raw,s.l):pRSS(raw,s.l))
+    .map(e=>({...e,own:!!s.own,rule:classify(e.ti)}));
+  CACHE[s.i]={at:Date.now(),items};
+  ST[s.i]={l:s.l,g:s.g,own:!!s.own,state:'ok',n:items.length};
+}
+async function runScan(force){
+  if(busy)return;busy=true;D.rf.classList.add('spin');
+  ABORT=new AbortController();
+  const cf=Store.g('p7_cf');
+  const all=cf?[...SRC,{i:'cf',l:'Extra feed',g:'Custom',k:'rss',p:1,ttl:300,u:cf}]:SRC;
+  const due=all.filter(s=>force||!CACHE[s.i]||Date.now()-CACHE[s.i].at>s.ttl*1000).sort((a,b)=>a.p-b.p);
+  if(!due.length){busy=false;D.rf.classList.remove('spin');return}
+
+  let done=0;const failed=[];
+  const tick=()=>{done++;D.prog.style.width=Math.round(done/(due.length+failed.length||1)*100)+'%';schedule()};
+  for(const s of due){
+    if(ABORT.signal.aborted)break;
+    try{await fetchOne(s)}catch(e){
+      ST[s.i]={l:s.l,g:s.g,own:!!s.own,state:'ko',e:String(e.message||e).slice(0,22)};failed.push(s)}
+    tick();await sleep(450);                 // espacement : c'est ce qui évite le 429 en cascade
+  }
+  if(failed.length&&!ABORT.signal.aborted){  // une seule reprise, plus lente
+    await sleep(2500);
+    for(const s of failed){
+      if(ABORT.signal.aborted)break;
+      try{await fetchOne(s)}catch(e){
+        ST[s.i]={l:s.l,g:s.g,own:!!s.own,state:'ko',e:String(e.message||e).slice(0,22)}}
+      schedule();await sleep(900);
+    }
+  }
+  coldDone=true;busy=false;D.rf.classList.remove('spin');
+  D.prog.style.width='100%';setTimeout(()=>D.prog.style.width='0',900);
+  rebuild();
+}
+let pend=false;
+const schedule=()=>{if(pend)return;pend=true;setTimeout(()=>{pend=false;rebuild()},300)};
+
+function rebuild(){
+  const acc=[];for(const id in CACHE)acc.push(...CACHE[id].items);
+  acc.sort((a,b)=>b.dt-a.dt);
+  const seen=new Set(),out=[];
+  for(const e of acc){const k=key(e);if(k.length<12||seen.has(k))continue;seen.add(k);out.push(e);
+    if(out.length>=MAXEV)break}
+  corroborate(out);
+  const prev=EV[0]?.ti;
+  EV=out;last=Date.now();absorbSoon(out);
+  const top=EV.find(e=>e.rule.n===3&&Date.now()-e.dt<25*6e4);
+  if(top&&top.ti!==prev&&coldDone){try{navigator.vibrate?.([35,55,35,55,110])}catch(e){}}
+  paint();
+}
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const fmtT=d=>d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const fmtD=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'});
+const rel=d=>{const s=(Date.now()-d)/1000;
+  return s<90?'now':s<3600?Math.round(s/60)+' min':s<86400?Math.round(s/3600)+' h':Math.round(s/86400)+' d'};
+const xTag=n=>n==null?'':n>=3?'<span class="tag x3">confirmed ×'+n+'</span>'
+  :n===2?'<span class="tag x2">cross-checked</span>':'<span class="tag x1">single source</span>';
+
+function evInner(r,ts,xn,prim,link,title,src,extra){
+  return '<div class="sp" style="background:'+r.h+'"></div><div class="bd">'
+   +'<div class="hd">'+(prim?'<span class="tag prim">primary</span>':'')
+     +'<span class="tag" style="background:'+r.a+';color:'+r.h+'">'+esc(r.c)+'</span>'
+     +xTag(xn)+'<span class="tm">'+ts+'</span></div>'
+   +'<h3><a href="'+esc(link)+'" target="_blank" rel="noopener">'+esc(title)+'</a></h3>'
+   +(r.n?'<div class="lean"><span class="pill '+CLS(r.g)+'">GU '+r.g+'</span>'
+        +'<span class="pill '+CLS(r.x)+'">XAG '+r.x+'</span>'
+        +'<span class="pill">'+esc(src)+'</span></div>':'')
+   +(r.t?'<p class="nt">'+esc(r.t)+'</p>':'')+(extra||'')+'</div>';
+}
+
+const fnodes=new Map();
+function paintFeed(){
+  const box=D.feed,list=EV.slice(0,SHOW);
+  if(!list.length){fnodes.clear();
+    box.innerHTML=coldDone?'<div class="void">No events. Check the Info tab.</div>'
+                          :'<div class="void">Loading 30 days of context…</div>';return}
+  box.querySelector('.void')?.remove();
+  const want=new Set();let cur=box.firstChild;
+  for(const e of list){
+    const k=key(e);want.add(k);
+    let el=fnodes.get(k);
+    if(!el){el=document.createElement('article');el.className='ev n'+e.rule.n;
+      el.innerHTML=evInner(e.rule,fmtD(e.dt)+' '+fmtT(e.dt),e.xn,e.prim,e.li,e.ti,e.so);
+      fnodes.set(k,el);
+    }else{
+      const hd=el.querySelector('.hd'),nx=xTag(e.xn);
+      if(hd.dataset.x!==nx){hd.dataset.x=nx;
+        hd.innerHTML=(e.prim?'<span class="tag prim">primary</span>':'')
+          +'<span class="tag" style="background:'+e.rule.a+';color:'+e.rule.h+'">'+esc(e.rule.c)+'</span>'
+          +nx+'<span class="tm">'+fmtD(e.dt)+' '+fmtT(e.dt)+'</span>'}
+    }
+    if(cur===el)cur=el.nextSibling;else box.insertBefore(el,cur);
+  }
+  for(const[k,el]of fnodes)if(!want.has(k)){el.remove();fnodes.delete(k)}
+}
+
+function press(hours){
+  const now=Date.now(),H=hours*36e5;let p=0,n=0;
+  for(const e of EV){const a=now-e.dt;if(a>H||!e.rule.n)continue;n++;p+=e.rule.usd*e.rule.n*(1-a/H)}
+  const div=hours<=4?6:hours<=24?14:40;
+  return{p:Math.max(-1,Math.min(1,p/div)),n};
+}
+function lean(v){
+  if(!v.length)return{b:'—',c:'na',f:0,a:0};
+  const c=k=>v.filter(x=>x===k).length;
+  const L=c('LONG'),S=c('SHORT'),W=c('WAIT'),A=c('CONFLICT')+c('READ');
+  if(W&&W>=Math.max(L,S,A))return{b:'WAIT',c:'wt',f:W,a:0};
+  if(A&&A>=Math.max(L,S))return{b:'CONFLICT',c:'am',f:A,a:0};
+  if(L>S)return{b:'LONG',c:'up',f:L,a:S};
+  if(S>L)return{b:'SHORT',c:'dn',f:S,a:L};
+  return{b:'NEUTRAL',c:'na',f:L,a:S};
+}
+const T=(k,v)=>{const n=D[k];if(n&&n.textContent!==String(v))n.textContent=v};
+
+let rafP=0;
+const paint=()=>{if(rafP)return;rafP=requestAnimationFrame(()=>{rafP=0;draw()})};
+function draw(){
+  const arr=Object.values(ST),ok=arr.filter(s=>s.state==='ok').length;
+  const ph=arr.map(s=>'<i class="'+(s.state==='ok'?'k':s.state==='ko'?'x':'')+'"></i>').join('');
+  if(D.pips.dataset.h!==ph){D.pips.dataset.h=ph;D.pips.innerHTML=ph}
+  T('cov',ok+'/'+arr.length+' feeds · '+EV.length+' events · '+(last?fmtT(new Date(last)):'—'));
+
+  if(coldDone&&ok===0){
+    if(!D.diagBox.innerHTML)D.diagBox.innerHTML='<div class="diag"><h4>No feed responding</h4><ol>'
+      +'<li><b>CORS relays saturated</b> — most common. Wait two minutes, then pull down.</li>'
+      +'<li><b>Brave Shields</b> — tap the lion in the address bar and turn shields down for this site.</li>'
+      +'<li><b>Opened as file://</b> — serve the page from GitHub Pages instead.</li>'
+      +'<li>See the <b>Info</b> tab for each failure.</li></ol></div>';
+  }else if(D.diagBox.innerHTML)D.diagBox.innerHTML='';
+
+  const a4=press(4),a24=press(24),a7=press(168);
+  const w=Math.abs(a4.p)*50,l=a4.p>=0?50:50-w;
+  D.pFill.style.left=l+'%';D.pFill.style.width=w+'%';
+  D.pFill.className='fl '+(a4.p>.02?'p':a4.p<-.02?'n':'');
+  D.pVal.textContent=(a4.p>0?'+':'')+a4.p.toFixed(2);
+  D.pVal.className='big num '+(a4.p>.02?'pos':a4.p<-.02?'neg':'');
+  T('pMeta','4-hour window · '+a4.n+' event'+(a4.n===1?'':'s'));
+  const hz=(vk,nk,o)=>{const v=D[vk];v.textContent=(o.p>0?'+':'')+o.p.toFixed(2);
+    v.className='v '+(o.p>.02?'pos':o.p<-.02?'neg':'z');T(nk,o.n+' ev')};
+  hz('h4','h4n',a4);hz('h24','h24n',a24);hz('h7','h7n',a7);
+
+  const win=EV.filter(e=>Date.now()-e.dt<4*36e5&&e.rule.n>=2);
+  const g=lean(win.map(e=>e.rule.g)),x=lean(win.map(e=>e.rule.x));
+  const setI=(ck,bk,mk,o)=>{const b=D[bk];
+    if(b.textContent!==o.b){b.textContent=o.b;b.className='b '+o.c}
+    const c=D[ck],cn='ic '+(o.c==='na'?'':o.c);
+    if(!c.className.startsWith(cn))c.className=cn+(c.classList.contains('seal')?' seal':'');
+    T(mk,o.f+' for · '+o.a+' against')};
+  setI('gC','gB','gM',g);setI('xC','xB','xM',x);
+  T('note',win.length
+    ?'Counts tier-2 and tier-3 catalysts over 4 hours. A bias is contextual lean, never an entry signal — it replaces neither H1/H4 alignment nor stop sizing.'
+    :'No catalyst in the 4-hour window. Check the 24 h and 7 d readings above for the wider regime.');
+
+  const mics=EV.filter(e=>e.rule.mic&&Date.now()-e.dt<3*36e5);
+  D.mic.hidden=!mics.length;
+  if(mics.length){const h=mics.slice(0,3).map(m=>'<p>'+esc(m.ti)+' <i>'+rel(m.dt)+'</i></p>').join('');
+    if(D.micL.dataset.h!==h){D.micL.dataset.h=h;D.micL.innerHTML=h}}
+
+  paintFeed();
+
+  const sh=arr.map(s=>'<div class="src"><div class="l"><b>'+esc(s.l)+'</b><span>'+esc(s.g)
+    +(s.own?' · <span class="own">PRIMARY</span>':'')+'</span></div><div class="st '+s.state+'">'
+    +(s.state==='ok'?s.n+' items':s.state==='ko'?'failed · '+esc(s.e):'pending')+'</div></div>').join('');
+  if(D.srcList.dataset.h!==sh){D.srcList.dataset.h=sh;D.srcList.innerHTML=sh}
+
+  clock();
+  if(!$('v2').hidden&&archDirty)paintArch();
+}
+
+let lastC='',sealed=null;
+function clock(){
+  const live=EV.find(e=>e.rule.n>=2&&!e.rule.mic&&Date.now()-e.dt<45*6e4);
+  const seal=v=>{if(sealed===v)return;sealed=v;
+    D.gC.classList.toggle('seal',v);D.xC.classList.toggle('seal',v)};
+  if(!live){if(!D.lk.hidden)D.lk.hidden=true;seal(false);return}
+  D.lk.hidden=false;
+  const rem=Math.ceil(live.dt.getTime()/3e5)*3e5-Date.now();
+  if(rem>0){
+    if(D.lk.className!=='lk')D.lk.className='lk';
+    D.lk.style.setProperty('--pct',(100-rem/3e5*100).toFixed(1)+'%');
+    const s=Math.ceil(rem/1000),t=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    if(t!==lastC){D.lkC.textContent=t;lastC=t}
+    T('lkM','M5 candle running — no entry before it closes.');seal(true);
+  }else{
+    if(D.lk.className!=='lk ok')D.lk.className='lk ok';
+    D.lk.style.setProperty('--pct','100%');
+    if(lastC!=='M5 OK'){D.lkC.textContent='M5 OK';lastC='M5 OK'}
+    T('lkM','Closed '+Math.floor(-rem/6e4)+' min ago. Confirm H1/H4 — the stop does not move once placed.');
+    seal(false);
+  }
+  T('lkS',live.ti);
+}
+
+let io=null,filBuilt=false;
+const CATS=['ALL','TAR_UP','TAR_DN','FED_INDEP','FED_DOVE','GEO','BUD','MIC','UK'];
+function paintArch(){
+  archDirty=false;
+  const a=arch().filter(x=>x.n>=1),b=Array(30).fill(0);
+  for(const x of a){const d=Math.floor((Date.now()-x.ts)/DAY);if(d>=0&&d<30&&x.n>=2)b[29-d]+=x.n===3?2:1}
+  const mx=Math.max(1,...b);
+  D.spark.innerHTML=b.map(v=>'<i class="'+(v>=mx*.66?'h':v>=mx*.33?'m':'')
+    +'" style="height:'+Math.max(3,v/mx*100)+'%"></i>').join('');
+  if(!filBuilt){D.fil.innerHTML=CATS.map(id=>'<button data-f="'+id+'">'+(id==='ALL'?'All':RM[id].c)+'</button>').join('');filBuilt=true}
+  D.fil.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.f===filt));
+
+  const sel=filt==='ALL'?a:a.filter(x=>x.r===filt);
+  if(!sel.length){D.arch.innerHTML='<div class="void">Nothing in this category over 30 days.</div>';return}
+  let h='',day='';
+  for(const x of sel.slice(0,archN)){
+    const r=RM[x.r]||NO,id=x.id||uid(x.k);
+    const d=new Date(x.ts).toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
+    if(d!==day){day=d;h+='<div class="day">'+d+'</div>'}
+    const extra=(x.n>=2&&!MEAS.has(id)?'<button class="mbtn" data-m="'+id+'" data-ts="'+x.ts+'">measure the day</button>':'')
+      +'<div class="meas" id="'+id+'"'+(MEAS.has(id)?'>'+MEAS.get(id):' hidden>')+'</div>';
+    h+='<article class="ev n'+x.n+'">'+evInner(r,fmtT(new Date(x.ts)),null,!!x.o,x.l,x.t,x.s,extra)+'</article>';
+  }
+  if(sel.length>archN)h+='<div id="more" style="height:1px"></div>';
+  D.arch.innerHTML=h;
+  io?.disconnect();
+  const mo=$('more');
+  if(mo){io=new IntersectionObserver(en=>{if(en[0].isIntersecting){archN+=40;archDirty=true;paintArch()}},{rootMargin:'500px'});io.observe(mo)}
+}
+
+const CA=(d,c)=>'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@'+d+'/v1/currencies/'+c+'.json';
+const iso=t=>new Date(t).toISOString().slice(0,10);
+async function fx(ts,cur){
+  for(let i=0;i<5;i++){
+    try{const j=await grab(CA(iso(ts-i*DAY),cur),{direct:1,ms:9000});
+      let v=JSON.parse(j)?.[cur]?.usd;
+      if(typeof v!=='number'||!isFinite(v)||v<=0)throw 0;
+      return v<1?1/v:v}catch(e){}}
+  throw new Error('unavailable');
+}
+async function measure(id,ts){
+  const b=$(id);if(!b)return;
+  const btn=document.querySelector('[data-m="'+id+'"]');
+  if(btn){btn.disabled=true;btn.textContent='measuring…'}
+  b.hidden=false;b.textContent='measuring…';
+  try{
+    const[g0,g1,x0,x1]=await Promise.all([fx(ts-DAY,'gbp'),fx(ts,'gbp'),fx(ts-DAY,'xag'),fx(ts,'xag')]);
+    const gp=Math.round((g1-g0)*1e4),xp=(x1-x0)/x0*100;
+    const col=v=>v>0?'var(--long)':v<0?'var(--short)':'var(--ghost)';
+    const html='D-1 → D &nbsp; GBPUSD <b style="color:'+col(gp)+'">'+(gp>0?'+':'')+gp+' pips</b>'
+      +' &nbsp;·&nbsp; XAGUSD <b style="color:'+col(xp)+'">'+(xp>0?'+':'')+xp.toFixed(2)+' %</b><br>'
+      +'<span style="color:var(--ghost)">Daily close to close. Says nothing about the intraday reaction or the entry point.</span>';
+    MEAS.set(id,html);b.innerHTML=html;btn?.remove();
+  }catch(e){b.innerHTML='<span style="color:var(--short)">Unavailable</span> · no series for that date.';
+    if(btn){btn.disabled=false;btn.textContent='retry'}}
+}
+
+/* ── legend ── */
+D.legCat.innerHTML=[...RULES,NO].map(r=>
+  '<div class="lg"><span class="sw b" style="background:'+r.h+'"></span>'
+ +'<span class="tx"><b style="color:'+r.h+'">'+esc(r.c)+'</b>'
+ +'<i>'+esc(r.d)+' · GU '+r.g+' / XAG '+r.x+'</i></span></div>').join('');
+D.legDir.innerHTML=[
+ ['var(--long)','LONG','Buy-side lean on that instrument.'],
+ ['var(--short)','SHORT','Sell-side lean on that instrument.'],
+ ['var(--amb)','CONFLICT / READ','Forces cancel out, or the headline must be read. No lean is published.'],
+ ['var(--wait)','WAIT','Trump is live. Headline risk, no direction.'],
+ ['var(--ghost)','NEUTRAL','No measurable effect on that instrument.'],
+ ['var(--faint)','SINGLE SOURCE','One outlet reports it.'],
+ ['var(--info)','CROSS-CHECKED','Two independent outlets.'],
+ ['var(--long)','CONFIRMED ×N','Three or more independent outlets.'],
+ ['var(--amb)','PRIMARY','Straight from a Trump or White House channel, no intermediary.']
+].map(([c,t,d])=>'<div class="lg"><span class="sw" style="background:'+c+'"></span>'
+ +'<span class="tx"><b style="color:'+c+'">'+t+'</b><i>'+d+'</i></span></div>').join('')
+ +'<div class="lg"><span class="sw" style="background:var(--ghost);opacity:.45"></span>'
+ +'<span class="tx"><b>Dimmed row</b><i>Tier 0 — noise. No market trigger matched.</i></span></div>';
+
+/* ── UI ── */
+document.addEventListener('click',ev=>{
+  const f=ev.target.closest('[data-f]');
+  if(f){filt=f.dataset.f;archN=40;archDirty=true;paintArch();return}
+  const m=ev.target.closest('[data-m]');
+  if(m){try{navigator.vibrate?.(10)}catch(e){}measure(m.dataset.m,+m.dataset.ts)}
+});
+function view(i){
+  for(let k=1;k<=3;k++){$('v'+k).hidden=(k!==i);$('t'+k).setAttribute('aria-selected',k===i)}
+  if(i===2)paintArch();
+  window.scrollTo(0,0);
+}
+for(let k=1;k<=3;k++)$('t'+k).onclick=()=>{try{navigator.vibrate?.(8)}catch(e){}view(k)};
+D.rf.onclick=()=>{try{navigator.vibrate?.(12)}catch(e){}runScan(true)};
+D.cf.value=Store.g('p7_cf')||'';
+$('bSave').onclick=()=>{Store.s('p7_cf',D.cf.value.trim());runScan(true)};
+$('bScan').onclick=()=>runScan(true);
+
+(()=>{let y0=null,dy=0;
+  addEventListener('touchstart',e=>{y0=scrollY<=0?e.touches[0].clientY:null;dy=0},{passive:true});
+  addEventListener('touchmove',e=>{if(y0===null)return;
+    dy=Math.max(0,Math.min(96,(e.touches[0].clientY-y0)*.55));
+    D.ptr.style.height=dy+'px';
+    D.ptr.textContent=dy>62?'release to rescan':dy>10?'pull…':''},{passive:true});
+  addEventListener('touchend',()=>{
+    if(y0!==null&&dy>62){try{navigator.vibrate?.(14)}catch(e){}runScan(true)}
+    D.ptr.style.height='0';D.ptr.textContent='';y0=null;dy=0},{passive:true});
+})();
+
+let poll=null;
+const start=()=>{if(!poll)poll=setInterval(()=>runScan(false),90000)};
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){clearInterval(poll);poll=null;ABORT?.abort();busy=false;D.rf.classList.remove('spin')}
+  else{start();if(Date.now()-last>60000)runScan(false);else paint()}
+});
+setInterval(()=>{if(!document.hidden)clock()},1000);
+
+if(arch().length){
+  EV=arch().slice(0,MAXEV).map(x=>({ti:x.t,li:x.l,dt:new Date(x.ts),so:x.s,own:!!x.o,
+    rule:RM[x.r]||NO,xn:null,prim:!!x.o}));
+  paint();
+}
+start();runScan(false);
+</script>
+</body>
+</html>
